@@ -1,22 +1,6 @@
 /**
- * Type definitions for the YouTube App
+ * General API Types
  */
-
-export interface Video {
-  id: string;
-  title: string;
-  description: string;
-  thumbnail: string;
-  channelTitle: string;
-  publishedAt: string;
-}
-
-export interface Channel {
-  id: string;
-  title: string;
-  description: string;
-  thumbnail: string;
-}
 
 export interface ApiError {
   code: string;
@@ -28,14 +12,14 @@ export interface ApiError {
  * Desktop and Window Management Types
  */
 
-export type AppId = "file-manager" | "settings" | "terminal" | "browser" | "text-editor";
+export type AppId = "file-manager" | "settings" | "terminal" | "browser" | "text-editor" | "youtube";
 export type Theme = "light" | "dark" | "system";
 
 export interface AppRegistry {
   id: AppId;
   name: string;
   icon: string;
-  category: "utility" | "productivity" | "system";
+  category: "utility" | "productivity" | "system" | "entertainment";
   executable: boolean;
 }
 
@@ -112,4 +96,88 @@ export interface QuotaInfo {
   usedSize: number;
   usedPercent: number;
   remaining: number;
+}
+
+/**
+ * YouTube App Types
+ */
+
+export interface YouTubeVideo {
+  id: string;
+  title: string;
+  description: string;
+  thumbnail: string;
+  channelTitle: string;
+  channelId: string;
+  publishedAt: string;
+  duration: string;
+  viewCount: string;
+  likeCount?: string;
+}
+
+export interface YouTubeSearchResult {
+  videos: YouTubeVideo[];
+  nextPageToken?: string;
+  prevPageToken?: string;
+  totalResults: number;
+}
+
+export interface YouTubePlayerState {
+  isPlaying: boolean;
+  currentVideo: YouTubeVideo | null;
+  volume: number;
+  playbackRate: number;
+  currentTime: number;
+  duration: number;
+}
+
+export interface YouTubeHistoryItem {
+  video: YouTubeVideo;
+  watchedAt: number;
+  watchDuration: number;
+}
+
+export interface YouTubePlaylistItem {
+  id: string;
+  name: string;
+  videos: YouTubeVideo[];
+  createdAt: number;
+}
+
+export interface YouTubeCacheEntry {
+  key: string;
+  data: any;
+  timestamp: number;
+  expiresAt: number;
+}
+
+/**
+ * Browser App Types
+ */
+
+export interface BrowserHistoryItem {
+  id: string;
+  url: string;
+  title: string;
+  timestamp: number;
+  favicon?: string;
+}
+
+export interface BrowserTab {
+  id: string;
+  url: string;
+  title: string;
+  favicon?: string;
+  isLoading: boolean;
+  canGoBack: boolean;
+  canGoForward: boolean;
+}
+
+export interface BrowserSettings {
+  homepage: string;
+  searchEngine: string;
+  enableJavaScript: boolean;
+  enablePlugins: boolean;
+  blockPopups: boolean;
+  savePasswords: boolean;
 }
