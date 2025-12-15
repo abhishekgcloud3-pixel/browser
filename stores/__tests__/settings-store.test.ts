@@ -3,6 +3,7 @@ import { useSettingsStore } from "../settings-store";
 
 describe("Settings Store", () => {
   beforeEach(() => {
+    localStorage.clear();
     useSettingsStore.setState({
       settings: {
         theme: "system",

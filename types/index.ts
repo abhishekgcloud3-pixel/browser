@@ -39,18 +39,24 @@ export interface AppRegistry {
   executable: boolean;
 }
 
-export interface WindowMetadata {
-  id: string;
-  appId: AppId;
-  title: string;
+export interface WindowBounds {
   x: number;
   y: number;
   width: number;
   height: number;
+}
+
+export interface WindowMetadata extends WindowBounds {
+  id: string;
+  appId: AppId;
+  title: string;
   isMinimized: boolean;
+  isMaximized: boolean;
+  isClosing: boolean;
   isFocused: boolean;
   zIndex: number;
   createdAt: number;
+  restoreBounds?: WindowBounds;
 }
 
 export interface RunningApp {

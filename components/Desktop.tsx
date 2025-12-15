@@ -1,10 +1,13 @@
 "use client";
 
 import React, { useMemo, useCallback } from "react";
+import { shallow } from "zustand/shallow";
 import { useRunningAppsStore } from "@/stores/running-apps-store";
+import { useWindowStore } from "@/stores/window-store";
 import { useSettingsStore } from "@/stores/settings-store";
 import { DEFAULT_APP_REGISTRY } from "@/stores/app-registry";
 import type { AppId } from "@/types";
+import { WindowManager } from "./WindowManager";
 
 const DesktopIcon = React.memo(
   ({
@@ -47,10 +50,20 @@ DesktopIcon.displayName = "DesktopIcon";
 
 export const Desktop = React.memo(() => {
   const launchApp = useRunningAppsStore((state) => state.launchApp);
-  const isAppRunning = useRunningAppsStore((state) => state.isAppRunning);
-  const getWallpaper = useSettingsStore((state) => state.getWallpaper);
-  const getIconSize = useSettingsStore((state) => state.getIconSize);
-  const wallpaper = getWallpaper();
+  const runningAppIds = useWindowStore(
+    useCallback(
+      (state) =>
+        Object.values(state.windows)
+          .filter((w) => !w.isClosing)
+          .map((w) => w.appId),
+      [],
+    ),
+    shallow,
+  );
+  const wallpaper = useSettingsStore((state) => state.settings.wallpaper);
+  const iconSize = useSettingsStore((state) => state.settings.iconSize);
+
+  const runningAppIdSet = useMemo(() => new Set(runningAppIds), [runningAppIds]);
 
   const handleLaunchApp = useCallback(
     (appId: AppId) => {
@@ -64,7 +77,7 @@ export const Desktop = React.memo(() => {
       <div
         className="grid gap-6 p-8"
         style={{
-          gridTemplateColumns: `repeat(auto-fill, minmax(${getIconSize() + 32}px, 1fr))`,
+          gridTemplateColumns: `repeat(auto-fill, minmax(${iconSize + 32}px, 1fr))`,
         }}
       >
         {DEFAULT_APP_REGISTRY.map((app) => (
@@ -72,12 +85,12 @@ export const Desktop = React.memo(() => {
             key={app.id}
             app={app}
             onDoubleClick={() => handleLaunchApp(app.id)}
-            isRunning={isAppRunning(app.id)}
+            isRunning={runningAppIdSet.has(app.id)}
           />
         ))}
       </div>
     ),
-    [getIconSize, handleLaunchApp, isAppRunning],
+    [iconSize, handleLaunchApp, runningAppIdSet],
   );
 
   return (
@@ -91,6 +104,7 @@ export const Desktop = React.memo(() => {
       aria-label="Desktop surface"
     >
       <div className="flex-1 overflow-auto">{appGrid}</div>
+      <WindowManager />
     </div>
   );
 });

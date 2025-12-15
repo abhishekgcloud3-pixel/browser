@@ -4,6 +4,7 @@ import { useWindowStore } from "../window-store";
 
 describe("Running Apps Store", () => {
   beforeEach(() => {
+    localStorage.clear();
     useRunningAppsStore.setState({ apps: {} });
     useWindowStore.getState().clearAllWindows();
   });
