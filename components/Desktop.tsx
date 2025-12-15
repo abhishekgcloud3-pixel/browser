@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useMemo, useCallback } from "react";
-import { shallow } from "zustand/shallow";
 import { useRunningAppsStore } from "@/stores/running-apps-store";
 import { useWindowStore } from "@/stores/window-store";
 import { useSettingsStore } from "@/stores/settings-store";
@@ -58,7 +57,6 @@ export const Desktop = React.memo(() => {
           .map((w) => w.appId),
       [],
     ),
-    shallow,
   );
   const wallpaper = useSettingsStore((state) => state.settings.wallpaper);
   const iconSize = useSettingsStore((state) => state.settings.iconSize);

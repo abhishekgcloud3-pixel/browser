@@ -10,6 +10,7 @@
     "test": "vitest"
   },
   "dependencies": {
+    "dexie": "^4.0.8",
     "next": "16.0.10",
     "react": "19.2.1",
     "react-dom": "19.2.1",
@@ -25,6 +26,8 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.0.10",
+    "fake-indexeddb": "^6.2.5",
+    "idb": "^8.0.3",
     "jsdom": "^27.3.0",
     "tailwindcss": "^4",
     "typescript": "^5",

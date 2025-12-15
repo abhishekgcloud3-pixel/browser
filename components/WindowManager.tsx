@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useCallback } from "react";
-import { shallow } from "zustand/shallow";
 import { useWindowStore } from "@/stores/window-store";
 import { Window } from "./Window";
 
@@ -12,7 +11,6 @@ export const WindowManager = React.memo(() => {
         .sort((a, b) => a.zIndex - b.zIndex)
         .map((w) => w.id);
     }, []),
-    shallow,
   );
 
   useEffect(() => {

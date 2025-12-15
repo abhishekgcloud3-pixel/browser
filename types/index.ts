@@ -75,3 +75,41 @@ export interface DesktopSettings {
   taskbarPosition: "bottom" | "top";
   autoHideTaskbar: boolean;
 }
+
+/**
+ * Virtual FileSystem Types
+ */
+
+export interface FSFile {
+  id: string;
+  name: string;
+  parentId: string;
+  content: string;
+  mimeType: string;
+  createdAt: number;
+  updatedAt: number;
+  size: number;
+}
+
+export interface FSDirectory {
+  id: string;
+  name: string;
+  parentId: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface FSMetadata {
+  id?: number;
+  totalSize: number;
+  fileCount: number;
+  directoryCount: number;
+  lastCleanupAt: number;
+}
+
+export interface QuotaInfo {
+  maxSize: number;
+  usedSize: number;
+  usedPercent: number;
+  remaining: number;
+}

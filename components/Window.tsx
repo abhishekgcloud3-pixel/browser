@@ -2,6 +2,11 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useWindowStore } from "@/stores/window-store";
+import { FileManager } from "./apps/FileManager";
+import { TextEditor } from "./apps/TextEditor";
+import { Settings } from "./apps/Settings";
+import { Terminal } from "./apps/Terminal";
+import { Browser } from "./apps/Browser";
 import type { WindowBounds } from "@/types";
 
 const MIN_WIDTH = 320;
@@ -85,11 +90,17 @@ export const Window = React.memo(({ windowId }: { windowId: string }) => {
   const rafRef = useRef<number | null>(null);
   const draftRef = useRef<WindowBounds | null>(null);
   const [draftBounds, setDraftBounds] = useState<WindowBounds | null>(null);
+  const pointerMoveBoundRef = useRef<((event: PointerEvent) => void) | null>(null);
+  const pointerUpBoundRef = useRef<((event: PointerEvent) => void) | null>(null);
 
-  const bounds = draftBounds ??
-    (win
-      ? { x: win.x, y: win.y, width: win.width, height: win.height }
-      : null);
+  const bounds = useMemo(
+    () =>
+      draftBounds ??
+      (win
+        ? { x: win.x, y: win.y, width: win.width, height: win.height }
+        : null),
+    [draftBounds, win],
+  );
 
   useEffect(() => {
     const id = requestAnimationFrame(() => setHasEntered(true));
@@ -168,21 +179,37 @@ export const Window = React.memo(({ windowId }: { windowId: string }) => {
         (dragRef.current && event.pointerId === dragRef.current.pointerId) ||
         (resizeRef.current && event.pointerId === resizeRef.current.pointerId)
       ) {
-        document.removeEventListener("pointermove", handleDocumentPointerMove);
-        document.removeEventListener("pointerup", handleDocumentPointerUp);
+        if (pointerMoveBoundRef.current) {
+          document.removeEventListener("pointermove", pointerMoveBoundRef.current);
+        }
+        if (pointerUpBoundRef.current) {
+          document.removeEventListener("pointerup", pointerUpBoundRef.current);
+        }
         commitDraftBounds();
         stopInteraction();
       }
     },
-    [commitDraftBounds, handleDocumentPointerMove, stopInteraction],
+    [commitDraftBounds, stopInteraction],
   );
 
   useEffect(() => {
+    pointerMoveBoundRef.current = handleDocumentPointerMove;
+  }, [handleDocumentPointerMove]);
+
+  useEffect(() => {
+    pointerUpBoundRef.current = handleDocumentPointerUp;
+  }, [handleDocumentPointerUp]);
+
+  useEffect(() => {
     return () => {
-      document.removeEventListener("pointermove", handleDocumentPointerMove);
-      document.removeEventListener("pointerup", handleDocumentPointerUp);
+      if (pointerMoveBoundRef.current) {
+        document.removeEventListener("pointermove", pointerMoveBoundRef.current);
+      }
+      if (pointerUpBoundRef.current) {
+        document.removeEventListener("pointerup", pointerUpBoundRef.current);
+      }
     };
-  }, [handleDocumentPointerMove, handleDocumentPointerUp]);
+  }, []);
 
   const startDrag = useCallback(
     (event: React.PointerEvent) => {
@@ -199,16 +226,18 @@ export const Window = React.memo(({ windowId }: { windowId: string }) => {
         pointerId: event.pointerId,
       };
 
-      document.addEventListener("pointermove", handleDocumentPointerMove);
-      document.addEventListener("pointerup", handleDocumentPointerUp);
+      if (pointerMoveBoundRef.current) {
+        document.addEventListener("pointermove", pointerMoveBoundRef.current);
+      }
+      if (pointerUpBoundRef.current) {
+        document.addEventListener("pointerup", pointerUpBoundRef.current);
+      }
 
       scheduleDraftUpdate(bounds);
     },
     [
       bounds,
       focusWindow,
-      handleDocumentPointerMove,
-      handleDocumentPointerUp,
       scheduleDraftUpdate,
       win,
       windowId,
@@ -231,16 +260,18 @@ export const Window = React.memo(({ windowId }: { windowId: string }) => {
         direction,
       };
 
-      document.addEventListener("pointermove", handleDocumentPointerMove);
-      document.addEventListener("pointerup", handleDocumentPointerUp);
+      if (pointerMoveBoundRef.current) {
+        document.addEventListener("pointermove", pointerMoveBoundRef.current);
+      }
+      if (pointerUpBoundRef.current) {
+        document.addEventListener("pointerup", pointerUpBoundRef.current);
+      }
 
       scheduleDraftUpdate(bounds);
     },
     [
       bounds,
       focusWindow,
-      handleDocumentPointerMove,
-      handleDocumentPointerUp,
       scheduleDraftUpdate,
       win,
       windowId,
@@ -389,11 +420,12 @@ export const Window = React.memo(({ windowId }: { windowId: string }) => {
         </div>
       </div>
 
-      <div className="flex-1 p-4 text-sm text-neutral-700 dark:text-neutral-200 overflow-auto">
-        <div className="font-semibold mb-2">{win.appId}</div>
-        <div className="text-neutral-600 dark:text-neutral-300">
-          This is a placeholder app window.
-        </div>
+      <div className="flex-1 overflow-hidden">
+        {win.appId === "file-manager" && <FileManager />}
+        {win.appId === "text-editor" && <TextEditor />}
+        {win.appId === "settings" && <Settings />}
+        {win.appId === "terminal" && <Terminal />}
+        {win.appId === "browser" && <Browser />}
       </div>
 
       {!win.isMaximized && (
