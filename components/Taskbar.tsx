@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useMemo, useState, useCallback, useEffect } from "react";
-import { shallow } from "zustand/shallow";
 import { useRunningAppsStore } from "@/stores/running-apps-store";
 import { useWindowStore } from "@/stores/window-store";
 import { useSettingsStore } from "@/stores/settings-store";
@@ -266,7 +265,6 @@ export const Taskbar = React.memo(() => {
           .sort((a, b) => a.createdAt - b.createdAt),
       [],
     ),
-    shallow,
   );
 
   const focusedId = useWindowStore(
