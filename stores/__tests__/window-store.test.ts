@@ -3,6 +3,7 @@ import { useWindowStore } from "../window-store";
 
 describe("Window Store", () => {
   beforeEach(() => {
+    localStorage.clear();
     useWindowStore.getState().clearAllWindows();
   });
 
@@ -118,5 +119,32 @@ describe("Window Store", () => {
     expect(window?.y).toBe(300);
     expect(window?.width).toBe(1024);
     expect(window?.height).toBe(768);
+  });
+
+  it("should persist geometry and restore on rehydrate", async () => {
+    const windowId = useWindowStore
+      .getState()
+      .createWindow("terminal", "Terminal");
+
+    useWindowStore.getState().updateWindow(windowId, {
+      x: 222,
+      y: 111,
+      width: 900,
+      height: 700,
+    });
+
+    const persisted = localStorage.getItem("window-store");
+    expect(persisted).toBeTruthy();
+
+    useWindowStore.setState({ windows: {}, nextZIndex: 1 });
+    if (persisted) localStorage.setItem("window-store", persisted);
+
+    await useWindowStore.persist.rehydrate();
+
+    const restored = useWindowStore.getState().getWindow(windowId);
+    expect(restored?.x).toBe(222);
+    expect(restored?.y).toBe(111);
+    expect(restored?.width).toBe(900);
+    expect(restored?.height).toBe(700);
   });
 });
