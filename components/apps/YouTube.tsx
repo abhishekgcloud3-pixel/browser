@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import type { YouTubeSearchResult, YouTubeVideo, ApiError } from '@/types';
-import { addVideoToHistory, getVideoHistory, getPlaylists, createUserPlaylist, addVideoToPlaylist, youtubeDB } from '@/stores/youtube-db';
+import { addVideoToHistory, getVideoHistory, getPlaylists, createUserPlaylist, addVideoToPlaylist } from '@/stores/youtube-db';
 
 // Simple debounce function
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function debounce<T extends (...args: any[]) => any>(
   func: T,
   wait: number
@@ -186,8 +187,8 @@ export const YouTube: React.FC = () => {
   const [error, setError] = useState<ApiError | null>(null);
   const [currentVideo, setCurrentVideo] = useState<YouTubeVideo | null>(null);
   const [showPlayer, setShowPlayer] = useState(false);
-  const [history, setHistory] = useState<any[]>([]);
-  const [playlists, setPlaylists] = useState<any[]>([]);
+  const [history, setHistory] = useState<YouTubeVideo[]>([]);
+  const [playlists, setPlaylists] = useState<{ id: string; name: string; videos: YouTubeVideo[] }[]>([]);
   const [activeTab, setActiveTab] = useState<'search' | 'history' | 'playlists'>('search');
 
   // Debounced search function
@@ -244,8 +245,36 @@ export const YouTube: React.FC = () => {
           getVideoHistory(),
           getPlaylists()
         ]);
-        setHistory(historyData);
-        setPlaylists(playlistsData);
+        // Convert StoredHistoryItem to YouTubeVideo
+        const convertedHistory = historyData.map(item => ({
+          id: item.videoId,
+          title: item.title,
+          description: '',
+          thumbnail: item.thumbnail,
+          channelTitle: item.channelTitle,
+          channelId: '',
+          publishedAt: new Date(item.watchedAt).toISOString(),
+          viewCount: '0',
+          duration: item.duration
+        }));
+        // Convert StoredPlaylist to our playlist format
+        const convertedPlaylists = playlistsData.map(playlist => ({
+          id: playlist.id,
+          name: playlist.name,
+          videos: playlist.videos.map(item => ({
+            id: item.videoId,
+            title: item.title,
+            description: '',
+            thumbnail: item.thumbnail,
+            channelTitle: item.channelTitle,
+            channelId: '',
+            publishedAt: new Date(item.watchedAt).toISOString(),
+            viewCount: '0',
+            duration: item.duration
+          }))
+        }));
+        setHistory(convertedHistory);
+        setPlaylists(convertedPlaylists);
       } catch (err) {
         console.error('Failed to load data:', err);
       }
@@ -289,7 +318,17 @@ export const YouTube: React.FC = () => {
         duration: video.duration
       });
       setPlaylists(prev => prev.map(p => p.id === playlists[0].id ? 
-        { ...p, videos: [...p.videos, { id: `history_${Date.now()}`, videoId: video.id, title: video.title, thumbnail: video.thumbnail, channelTitle: video.channelTitle, watchedAt: Date.now(), watchDuration: 0, duration: video.duration }] } : p
+        { ...p, videos: [...p.videos, {
+          id: video.id,
+          title: video.title,
+          description: video.description,
+          thumbnail: video.thumbnail,
+          channelTitle: video.channelTitle,
+          channelId: video.channelId,
+          publishedAt: video.publishedAt,
+          viewCount: video.viewCount,
+          duration: video.duration
+        }] } : p
       ));
     }
   };
@@ -383,17 +422,7 @@ export const YouTube: React.FC = () => {
         {history.map((item) => (
           <VideoCard
             key={item.id}
-            video={{
-              id: item.videoId,
-              title: item.title,
-              description: '',
-              thumbnail: item.thumbnail,
-              channelTitle: item.channelTitle,
-              channelId: '',
-              publishedAt: '',
-              duration: item.duration,
-              viewCount: '0'
-            }}
+            video={item}
             onPlay={(video) => handlePlayVideo(video)}
             onAddToPlaylist={(video) => handleAddToPlaylist(video)}
           />
@@ -424,21 +453,11 @@ export const YouTube: React.FC = () => {
             </p>
             {playlist.videos && playlist.videos.length > 0 && (
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
-                {playlist.videos.slice(0, 6).map((video: any) => (
+                {playlist.videos.slice(0, 6).map((video: YouTubeVideo) => (
                   <div
                     key={video.id}
                     className="cursor-pointer hover:opacity-80 transition-opacity"
-                    onClick={() => handlePlayVideo({
-                      id: video.videoId,
-                      title: video.title,
-                      description: '',
-                      thumbnail: video.thumbnail,
-                      channelTitle: video.channelTitle,
-                      channelId: '',
-                      publishedAt: '',
-                      duration: video.duration,
-                      viewCount: '0'
-                    })}
+                    onClick={() => handlePlayVideo(video)}
                   >
                     <img
                       src={video.thumbnail}
@@ -485,7 +504,7 @@ export const YouTube: React.FC = () => {
           ].map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
+              onClick={() => setActiveTab(tab.id as 'search' | 'history' | 'playlists')}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 activeTab === tab.id
                   ? 'bg-red-600 text-white'

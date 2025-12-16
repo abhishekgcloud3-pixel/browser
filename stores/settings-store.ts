@@ -101,6 +101,7 @@ export const useSettingsStore = create<SettingsState>()(
     {
       name: "settings-store",
       storage: createLocalStorage(),
+      skipHydration: true,
     },
   ),
 );

@@ -1,9 +1,24 @@
-import { db } from './db';
+import { getDB } from './db';
 import type { FSFile, FSDirectory, QuotaInfo } from '@/types';
 
 const ROOT_ID = 'root';
 
+// Helper to get db safely
+function getDbInstance() {
+  if (typeof window === 'undefined') {
+    throw new Error('FilesystemService can only be used on the client side');
+  }
+  return getDB();
+}
+
 export class FilesystemService {
+  /**
+   * Get database instance safely
+   */
+  private get db() {
+    return getDbInstance();
+  }
+
   /**
    * Create a new directory
    */
@@ -19,7 +34,7 @@ export class FilesystemService {
       updatedAt: now,
     };
 
-    await db.directories.add(directory);
+    await this.db.directories.add(directory);
     await this.updateMetadata();
     return directory;
   }
@@ -49,9 +64,8 @@ export class FilesystemService {
     };
 
     // Check quota - simulate adding the file
-    const files = await db.files.toArray();
-    const metadata = await db.metadata.toArray();
-    const settings = await db.settings.toArray();
+    const files = await this.db.files.toArray();
+    const settings = await this.db.settings.toArray();
 
     const maxSize = settings[0]?.maxSize || 50 * 1024 * 1024;
     const currentUsedSize = files.reduce((sum, f) => sum + f.size, 0);
@@ -61,7 +75,7 @@ export class FilesystemService {
       throw new Error('Storage quota exceeded');
     }
 
-    await db.files.add(file);
+    await this.db.files.add(file);
     await this.updateMetadata();
     return file;
   }
@@ -70,21 +84,21 @@ export class FilesystemService {
    * Read a file
    */
   async readFile(fileId: string): Promise<FSFile | undefined> {
-    return db.files.get(fileId);
+    return this.db.files.get(fileId);
   }
 
   /**
    * Update a file
    */
   async updateFile(fileId: string, updates: Partial<FSFile>): Promise<void> {
-    const file = await db.files.get(fileId);
+    const file = await this.db.files.get(fileId);
     if (!file) throw new Error('File not found');
 
     const now = Date.now();
     const newContent = updates.content ?? file.content;
     const newSize = new Blob([newContent]).size;
 
-    await db.files.update(fileId, {
+    await this.db.files.update(fileId, {
       ...updates,
       updatedAt: now,
       size: newSize,
@@ -97,10 +111,10 @@ export class FilesystemService {
    * Delete a file
    */
   async deleteFile(fileId: string): Promise<void> {
-    const file = await db.files.get(fileId);
+    const file = await this.db.files.get(fileId);
     if (!file) throw new Error('File not found');
 
-    await db.files.delete(fileId);
+    await this.db.files.delete(fileId);
     await this.updateMetadata();
   }
 
@@ -113,19 +127,19 @@ export class FilesystemService {
     }
 
     // Delete all files in directory
-    const files = await db.files.where('parentId').equals(dirId).toArray();
+    const files = await this.db.files.where('parentId').equals(dirId).toArray();
     for (const file of files) {
-      await db.files.delete(file.id);
+      await this.db.files.delete(file.id);
     }
 
     // Delete all subdirectories recursively
-    const dirs = await db.directories.where('parentId').equals(dirId).toArray();
+    const dirs = await this.db.directories.where('parentId').equals(dirId).toArray();
     for (const dir of dirs) {
       await this.deleteDirectory(dir.id);
     }
 
     // Delete the directory itself
-    await db.directories.delete(dirId);
+    await this.db.directories.delete(dirId);
     await this.updateMetadata();
   }
 
@@ -136,8 +150,8 @@ export class FilesystemService {
     files: FSFile[];
     directories: FSDirectory[];
   }> {
-    const files = await db.files.where('parentId').equals(dirId).toArray();
-    const directories = await db.directories.where('parentId').equals(dirId).toArray();
+    const files = await this.db.files.where('parentId').equals(dirId).toArray();
+    const directories = await this.db.directories.where('parentId').equals(dirId).toArray();
     return { files, directories };
   }
 
@@ -145,10 +159,10 @@ export class FilesystemService {
    * Move a file to another directory
    */
   async moveFile(fileId: string, newParentId: string): Promise<void> {
-    const file = await db.files.get(fileId);
+    const file = await this.db.files.get(fileId);
     if (!file) throw new Error('File not found');
 
-    await db.files.update(fileId, {
+    await this.db.files.update(fileId, {
       parentId: newParentId,
       updatedAt: Date.now(),
     });
@@ -164,10 +178,10 @@ export class FilesystemService {
       throw new Error('Cannot move root directory');
     }
 
-    const dir = await db.directories.get(dirId);
+    const dir = await this.db.directories.get(dirId);
     if (!dir) throw new Error('Directory not found');
 
-    await db.directories.update(dirId, {
+    await this.db.directories.update(dirId, {
       parentId: newParentId,
       updatedAt: Date.now(),
     });
@@ -179,7 +193,7 @@ export class FilesystemService {
    * Search for files by name
    */
   async searchFiles(query: string): Promise<FSFile[]> {
-    const allFiles = await db.files.toArray();
+    const allFiles = await this.db.files.toArray();
     const lowerQuery = query.toLowerCase();
     return allFiles.filter((file) => file.name.toLowerCase().includes(lowerQuery));
   }
@@ -188,7 +202,7 @@ export class FilesystemService {
    * Search for directories by name
    */
   async searchDirectories(query: string): Promise<FSDirectory[]> {
-    const allDirs = await db.directories.toArray();
+    const allDirs = await this.db.directories.toArray();
     const lowerQuery = query.toLowerCase();
     return allDirs.filter((dir) => dir.name.toLowerCase().includes(lowerQuery));
   }
@@ -201,12 +215,12 @@ export class FilesystemService {
     let currentId = itemId;
 
     while (currentId && currentId !== ROOT_ID) {
-      const file = await db.files.get(currentId);
+      const file = await this.db.files.get(currentId);
       if (file) {
         parts.unshift(file.name);
         currentId = file.parentId;
       } else {
-        const dir = await db.directories.get(currentId);
+        const dir = await this.db.directories.get(currentId);
         if (dir) {
           parts.unshift(dir.name);
           currentId = dir.parentId;
@@ -223,10 +237,10 @@ export class FilesystemService {
    * Get quota information
    */
   async getQuotaInfo(): Promise<QuotaInfo> {
-    const settings = await db.settings.toArray();
+    const settings = await this.db.settings.toArray();
     const maxSize = settings[0]?.maxSize || 50 * 1024 * 1024;
 
-    const metadata = await db.metadata.toArray();
+    const metadata = await this.db.metadata.toArray();
     const usedSize = metadata[0]?.totalSize || 0;
     const usedPercent = (usedSize / maxSize) * 100;
     const remaining = maxSize - usedSize;
@@ -244,16 +258,16 @@ export class FilesystemService {
    */
   private async updateMetadata(): Promise<void> {
     try {
-      const files = await db.files.toArray();
-      const directories = await db.directories.toArray();
+      const files = await this.db.files.toArray();
+      const directories = await this.db.directories.toArray();
 
       const totalSize = files.reduce((sum, file) => sum + file.size, 0);
       const fileCount = files.length;
       const directoryCount = directories.length;
 
-      const metadata = await db.metadata.toArray();
+      const metadata = await this.db.metadata.toArray();
       if (metadata.length > 0) {
-        await db.metadata.update(metadata[0].id!, {
+        await this.db.metadata.update(metadata[0].id!, {
           totalSize,
           fileCount,
           directoryCount,
@@ -269,10 +283,10 @@ export class FilesystemService {
    * Export all data (for backup)
    */
   async exportData(): Promise<string> {
-    const files = await db.files.toArray();
-    const directories = await db.directories.toArray();
-    const metadata = await db.metadata.toArray();
-    const settings = await db.settings.toArray();
+    const files = await this.db.files.toArray();
+    const directories = await this.db.directories.toArray();
+    const metadata = await this.db.metadata.toArray();
+    const settings = await this.db.settings.toArray();
 
     return JSON.stringify(
       {
@@ -292,10 +306,10 @@ export class FilesystemService {
    * Clear all data
    */
   async clearAll(): Promise<void> {
-    await db.files.clear();
-    await db.directories.clear();
-    await db.metadata.clear();
-    await db.settings.clear();
+    await this.db.files.clear();
+    await this.db.directories.clear();
+    await this.db.metadata.clear();
+    await this.db.settings.clear();
   }
 }
 

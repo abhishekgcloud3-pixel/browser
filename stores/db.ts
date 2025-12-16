@@ -27,13 +27,19 @@ export class FilesystemDB extends Dexie {
 let dbInstance: FilesystemDB | null = null;
 
 export function getDB(): FilesystemDB {
+  // Only create DB instance on client side
+  if (typeof window === 'undefined') {
+    throw new Error('FilesystemDB can only be used on the client side');
+  }
+  
   if (!dbInstance) {
     dbInstance = new FilesystemDB();
   }
   return dbInstance;
 }
 
-export const db = getDB();
+// Lazy initialization - only create DB when accessed on client
+export const db = typeof window !== 'undefined' ? getDB() : ({} as FilesystemDB);
 
 // Initialize database with root directory and default settings
 export async function initializeDatabase() {

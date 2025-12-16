@@ -28,10 +28,12 @@ if (typeof window !== "undefined") {
           // no-op
         },
         dispatchEvent: () => false,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       }) as any;
   }
 
   if (!window.PointerEvent) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     window.PointerEvent = window.MouseEvent as any;
   }
 

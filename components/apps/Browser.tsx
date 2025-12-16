@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import type { BrowserHistoryItem, BrowserTab } from '@/types';
+import type { BrowserHistoryItem } from '@/types';
 
 interface LoadingIndicatorProps {
   isLoading: boolean;
@@ -55,33 +55,35 @@ const extractDomain = (url: string): string => {
   }
 };
 
+// Initialize history from localStorage
+function getInitialHistory(): BrowserHistoryItem[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const savedHistory = localStorage.getItem('browser-history');
+    return savedHistory ? JSON.parse(savedHistory) : [];
+  } catch (err) {
+    console.error('Failed to load browser history:', err);
+    return [];
+  }
+}
+
 export const Browser = React.memo(() => {
   const [currentUrl, setCurrentUrl] = useState('https://example.com');
   const [displayUrl, setDisplayUrl] = useState('https://example.com');
   const [isLoading, setIsLoading] = useState(false);
   const [canGoBack, setCanGoBack] = useState(false);
   const [canGoForward, setCanGoForward] = useState(false);
-  const [history, setHistory] = useState<BrowserHistoryItem[]>([]);
-  const [historyIndex, setHistoryIndex] = useState(-1);
+  const [history, setHistory] = useState<BrowserHistoryItem[]>(getInitialHistory);
+  const [historyIndex, setHistoryIndex] = useState(() => {
+    const initialHistory = getInitialHistory();
+    return initialHistory.length > 0 ? initialHistory.length - 1 : -1;
+  });
   const [error, setError] = useState<string | null>(null);
   const [useProxy, setUseProxy] = useState(false);
   
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  // Load history from localStorage on mount
-  useEffect(() => {
-    try {
-      const savedHistory = localStorage.getItem('browser-history');
-      if (savedHistory) {
-        const parsed = JSON.parse(savedHistory);
-        setHistory(parsed);
-        setHistoryIndex(parsed.length - 1);
-      }
-    } catch (err) {
-      console.error('Failed to load browser history:', err);
-    }
-  }, []);
+  const isInitializedRef = useRef(false);
 
   // Save history to localStorage when it changes
   useEffect(() => {
@@ -194,10 +196,20 @@ export const Browser = React.memo(() => {
     }
   }, []);
 
-  // Load homepage on first render
+  // Load homepage on first render (only if not already loaded)
   useEffect(() => {
-    navigate('https://example.com');
-  }, [navigate]);
+    if (!isInitializedRef.current && history.length === 0) {
+      isInitializedRef.current = true;
+      // Directly update state for initial load to avoid cascading renders
+      const initialUrl = 'https://example.com';
+      setCurrentUrl(initialUrl);
+      setDisplayUrl(initialUrl);
+      setIsLoading(true);
+      setCanGoBack(false);
+      setCanGoForward(false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run only once on mount
 
   // Handle keyboard shortcuts
   useEffect(() => {
