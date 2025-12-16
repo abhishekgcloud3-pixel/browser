@@ -4,6 +4,7 @@ import React, { useEffect } from "react";
 import { Desktop } from "./Desktop";
 import { Taskbar } from "./Taskbar";
 import { useSettingsStore } from "@/stores/settings-store";
+import { StoreHydration } from "@/stores/hydration";
 
 export const DesktopLayout = React.memo(() => {
   const theme = useSettingsStore((state) => state.settings.theme);
@@ -23,16 +24,19 @@ export const DesktopLayout = React.memo(() => {
   };
 
   return (
-    <div
-      className={`h-screen w-screen flex ${taskbarClasses[taskbarPosition]} bg-white dark:bg-neutral-900 overflow-hidden`}
-      role="application"
-      aria-label="Desktop environment"
-    >
-      <Desktop />
-      <div className="h-12 shrink-0 border-t border-neutral-300 dark:border-neutral-700">
-        <Taskbar />
+    <>
+      <StoreHydration />
+      <div
+        className={`h-screen w-screen flex ${taskbarClasses[taskbarPosition]} bg-white dark:bg-neutral-900 overflow-hidden`}
+        role="application"
+        aria-label="Desktop environment"
+      >
+        <Desktop />
+        <div className="h-12 shrink-0 border-t border-neutral-300 dark:border-neutral-700">
+          <Taskbar />
+        </div>
       </div>
-    </div>
+    </>
   );
 });
 

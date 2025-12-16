@@ -3,10 +3,10 @@ import { getEnv } from '@/env.mjs';
 import type { YouTubeVideo, ApiError } from '@/types';
 
 // Simple in-memory cache with TTL
-const cache = new Map<string, { data: any; expiresAt: number }>();
+const cache = new Map<string, { data: unknown; expiresAt: number }>();
 const CACHE_TTL = 10 * 60 * 1000; // 10 minutes for video details
 
-function getCachedResponse(key: string): any | null {
+function getCachedResponse(key: string): unknown | null {
   const cached = cache.get(key);
   if (cached && Date.now() < cached.expiresAt) {
     return cached.data;
@@ -15,7 +15,7 @@ function getCachedResponse(key: string): any | null {
   return null;
 }
 
-function setCachedResponse(key: string, data: any): void {
+function setCachedResponse(key: string, data: unknown): void {
   // Clean up expired entries occasionally
   if (cache.size > 100) {
     const now = Date.now();

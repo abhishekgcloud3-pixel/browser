@@ -35,7 +35,7 @@ export interface StoredPlaylist {
 // Cache entry structure
 export interface StoredCacheEntry {
   key: string;
-  data: any;
+  data: unknown;
   timestamp: number;
   expiresAt: number;
 }
@@ -44,6 +44,11 @@ class YouTubeDB {
   private db: IDBDatabase | null = null;
 
   async init(): Promise<void> {
+    // Skip initialization on server side
+    if (typeof window === 'undefined') {
+      return Promise.resolve();
+    }
+
     if (this.db) return;
 
     return new Promise((resolve, reject) => {
@@ -229,7 +234,7 @@ class YouTubeDB {
   }
 
   // Cache operations
-  async setCache(key: string, data: any, ttlMinutes: number = 60): Promise<void> {
+  async setCache(key: string, data: unknown, ttlMinutes: number = 60): Promise<void> {
     await this.init();
     if (!this.db) throw new Error('Database not initialized');
 
@@ -252,7 +257,7 @@ class YouTubeDB {
     });
   }
 
-  async getCache(key: string): Promise<any | null> {
+  async getCache(key: string): Promise<unknown | null> {
     await this.init();
     if (!this.db) throw new Error('Database not initialized');
 
@@ -332,7 +337,9 @@ export async function addVideoToPlaylist(playlistId: string, video: StoredHistor
   return youtubeDB.addVideoToPlaylist(playlistId, video);
 }
 
-// Auto-cleanup expired cache on init
-youtubeDB.init().then(() => {
-  youtubeDB.clearExpiredCache().catch(console.error);
-}).catch(console.error);
+// Auto-cleanup expired cache on init (client-side only)
+if (typeof window !== 'undefined') {
+  youtubeDB.init().then(() => {
+    youtubeDB.clearExpiredCache().catch(console.error);
+  }).catch(console.error);
+}

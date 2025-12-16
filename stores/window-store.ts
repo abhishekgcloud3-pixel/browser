@@ -302,6 +302,7 @@ export const useWindowStore = create<WindowState>()(
     {
       name: "window-store",
       storage: createLocalStorage(),
+      skipHydration: true,
       partialize: (state) => ({
         windows: state.windows,
         nextZIndex: state.nextZIndex,

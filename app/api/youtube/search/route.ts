@@ -3,7 +3,7 @@ import { getEnv } from '@/env.mjs';
 import type { YouTubeSearchResult, ApiError } from '@/types';
 
 // Simple in-memory cache with TTL
-const cache = new Map<string, { data: any; expiresAt: number }>();
+const cache = new Map<string, { data: unknown; expiresAt: number }>();
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 function getCacheKey(params: URLSearchParams): string {
@@ -13,7 +13,7 @@ function getCacheKey(params: URLSearchParams): string {
     .join('&');
 }
 
-function getCachedResponse(key: string): any | null {
+function getCachedResponse(key: string): unknown | null {
   const cached = cache.get(key);
   if (cached && Date.now() < cached.expiresAt) {
     return cached.data;
@@ -22,7 +22,7 @@ function getCachedResponse(key: string): any | null {
   return null;
 }
 
-function setCachedResponse(key: string, data: any): void {
+function setCachedResponse(key: string, data: unknown): void {
   // Clean up expired entries occasionally
   if (cache.size > 100) {
     const now = Date.now();
@@ -131,7 +131,7 @@ export async function GET(request: NextRequest) {
     
     // Transform the response to our interface
     const result: YouTubeSearchResult = {
-      videos: data.items.map((item: any) => ({
+      videos: data.items.map((item: { id: { videoId: string }; snippet: { title: string; description: string; thumbnails: { medium?: { url: string }; default?: { url: string } }; channelTitle: string; channelId: string; publishedAt: string } }) => ({
         id: item.id.videoId,
         title: item.snippet.title,
         description: item.snippet.description,

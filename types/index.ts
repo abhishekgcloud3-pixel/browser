@@ -146,7 +146,7 @@ export interface YouTubePlaylistItem {
 
 export interface YouTubeCacheEntry {
   key: string;
-  data: any;
+  data: unknown;
   timestamp: number;
   expiresAt: number;
 }
