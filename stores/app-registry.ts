@@ -36,6 +36,13 @@ export const DEFAULT_APP_REGISTRY: AppRegistry[] = [
     category: "productivity",
     executable: true,
   },
+  {
+    id: "youtube" as AppId,
+    name: "YouTube",
+    icon: "🎥",
+    category: "entertainment",
+    executable: true,
+  },
 ];
 
 export function getAppById(appId: AppId): AppRegistry | undefined {

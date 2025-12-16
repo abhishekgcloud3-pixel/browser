@@ -10,7 +10,9 @@
     "test": "vitest"
   },
   "dependencies": {
+    "@types/lodash-es": "^4.17.12",
     "dexie": "^4.0.8",
+    "lodash-es": "^4.17.21",
     "next": "16.0.10",
     "react": "19.2.1",
     "react-dom": "19.2.1",

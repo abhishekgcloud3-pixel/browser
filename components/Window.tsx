@@ -7,6 +7,7 @@ import { TextEditor } from "./apps/TextEditor";
 import { Settings } from "./apps/Settings";
 import { Terminal } from "./apps/Terminal";
 import { Browser } from "./apps/Browser";
+import { YouTube } from "./apps/YouTube";
 import type { WindowBounds } from "@/types";
 
 const MIN_WIDTH = 320;
@@ -426,6 +427,7 @@ export const Window = React.memo(({ windowId }: { windowId: string }) => {
         {win.appId === "settings" && <Settings />}
         {win.appId === "terminal" && <Terminal />}
         {win.appId === "browser" && <Browser />}
+        {win.appId === "youtube" && <YouTube />}
       </div>
 
       {!win.isMaximized && (
