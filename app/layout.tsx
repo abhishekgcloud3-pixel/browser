@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { InitializeDB } from "./initialize-db";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -52,8 +53,10 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased transition-theme`}
         suppressHydrationWarning
       >
-        <InitializeDB />
-        {children}
+        <ErrorBoundary>
+          <InitializeDB />
+          {children}
+        </ErrorBoundary>
       </body>
     </html>
   );

@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useWindowStore } from "@/stores/window-store";
+import { ErrorBoundary } from "./ErrorBoundary";
 import { FileManager } from "./apps/FileManager";
 import { TextEditor } from "./apps/TextEditor";
 import { Settings } from "./apps/Settings";
@@ -421,14 +422,34 @@ export const Window = React.memo(({ windowId }: { windowId: string }) => {
         </div>
       </div>
 
-      <div className="flex-1 overflow-hidden">
-        {win.appId === "file-manager" && <FileManager />}
-        {win.appId === "text-editor" && <TextEditor />}
-        {win.appId === "settings" && <Settings />}
-        {win.appId === "terminal" && <Terminal />}
-        {win.appId === "browser" && <Browser />}
-        {win.appId === "youtube" && <YouTube />}
-      </div>
+      <ErrorBoundary
+        fallback={
+          <div className="flex-1 flex items-center justify-center p-4 bg-neutral-50 dark:bg-neutral-900">
+            <div className="text-center text-neutral-600 dark:text-neutral-400">
+              <p className="text-2xl mb-2">⚠️</p>
+              <p className="font-semibold mb-1">App Error</p>
+              <p className="text-sm">This app encountered an error</p>
+            </div>
+          </div>
+        }
+      >
+        <div className="flex-1 overflow-hidden">
+          {win.appId === "file-manager" && FileManager && <FileManager />}
+          {win.appId === "text-editor" && TextEditor && <TextEditor />}
+          {win.appId === "settings" && Settings && <Settings />}
+          {win.appId === "terminal" && Terminal && <Terminal />}
+          {win.appId === "browser" && Browser && <Browser />}
+          {win.appId === "youtube" && YouTube && <YouTube />}
+          {!["file-manager", "text-editor", "settings", "terminal", "browser", "youtube"].includes(win.appId) && (
+            <div className="flex items-center justify-center h-full p-4">
+              <div className="text-center text-neutral-600 dark:text-neutral-400">
+                <p className="text-lg mb-2">⚠️</p>
+                <p>Unknown app: {win.appId}</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </ErrorBoundary>
 
       {!win.isMaximized && (
         <>
