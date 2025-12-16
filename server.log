@@ -5,7 +5,7 @@ npm warn Unknown env config "python". This will stop working in the next major v
 
    ▲ Next.js 16.0.10
    - Local:         http://localhost:3000
-   - Network:       http://10.16.40.235:3000
+   - Network:       http://10.16.11.191:3000
 
  ✓ Starting...
- ✓ Ready in 839ms
+ ✓ Ready in 864ms
